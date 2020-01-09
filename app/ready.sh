@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -Eeu
 
 readonly MY_DIR="$( cd "$( dirname "${0}" )" && pwd )"
 
@@ -63,10 +63,16 @@ set_versioner_env_vars()
 
 # - - - - - - - - - - - - - - - - - - -
 set_versioner_env_vars
-cat /tmp/docker-compose.yml | envsubst
-# Now need to
-# 1) set export: in original docker-compose.yml
-# 2) harvest service names and port numbers, eg runner:4597
-#    How????
-
-wait_briefly_until_ready "${1}"
+# substitute environment-variables
+cat /tmp/docker-compose.yml | envsubst > /tmp/docker-compose.yml2
+# convery yaml to json
+yq r --tojson /tmp/docker-compose.yml2 > /tmp/docker-compose.json
+# extract service names
+readonly names=$(cat /tmp/docker-compose.json | jq '.services | to_entries[] | .key')
+for name in ${names}; do
+  port=$(cat /tmp/docker-compose.json | jq .services.${name}.export)
+  if [ "${port}" != 'null' ]; then
+    bare_name=$(echo "${name}" | tr -d '"') # strip leading/trailing "
+    wait_briefly_until_ready "${bare_name}:${port}"
+  fi
+done
