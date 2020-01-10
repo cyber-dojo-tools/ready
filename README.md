@@ -1,6 +1,6 @@
 # ready
 
--Work in progress.
+- Work in progress.
 - Investigating the idea of an image to check if docker containers
 are ready, as determined by `curl` calls.
 
@@ -21,10 +21,7 @@ services:
 then a call such as this:
 
 ```bash
-docker run \
-  --rm \
-  cyberdojo/versioner:latest \
-  sh -c 'cat /app/.env' \
+docker run --rm cyberdojo/versioner:latest \
 |
 docker run \
   --rm \
